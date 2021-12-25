@@ -45,16 +45,13 @@ async fn main() -> BoxedResult<()> {
         SectionChoice::CreateNew(name) => Some(api.create_section(project.id, name).await?),
     };
 
-    println!("{}", year);
-    println!("{:#?}", project);
-    println!("{:#?}", section);
-
-    // let section = todoist::Section::new(project.id, year);
-    // println!("{:?}", section);
-    // for day in 1..=25 {
-    //     let task = todoist::Task::new(project.id, section.map(|s| s.id), year, day);
-    //     println!("{:?}", task);
-    // }
+    println!();
+    for day in 1..=25 {
+        println!("Creating a task for day {}...", day);
+        api.create_task(&project, &section, year, day).await?;
+    }
+    println!();
+    println!("All done! Have fun in {}! 🙂", year);
 
     Ok(())
 }
