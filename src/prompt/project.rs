@@ -3,12 +3,13 @@ use std::{io, process};
 
 use termion::input::TermRead;
 
+use crate::prompt::name::prompt_name;
 use crate::todoist::project::{GetProjectsResponse, Project};
 
 #[derive(Debug)]
 pub enum ProjectChoice {
     Some(Project),
-    CreateNew,
+    CreateNew(String),
 }
 
 pub fn choose_project(stdin: &mut io::StdinLock, projects: GetProjectsResponse) -> ProjectChoice {
@@ -41,7 +42,7 @@ pub fn choose_project(stdin: &mut io::StdinLock, projects: GetProjectsResponse) 
                         println!(
                             "Okay, creating a new project and creating the tasks in that project."
                         );
-                        return ProjectChoice::CreateNew;
+                        return ProjectChoice::CreateNew(prompt_name(stdin));
                     }
                     _ => {}
                 }

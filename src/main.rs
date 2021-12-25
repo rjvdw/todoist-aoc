@@ -33,9 +33,7 @@ async fn main() -> BoxedResult<()> {
 
     let project = match project {
         ProjectChoice::Some(project) => project,
-        ProjectChoice::CreateNew => {
-            todo!()
-        }
+        ProjectChoice::CreateNew(name) => api.create_project(name).await?,
     };
 
     let sections = api.fetch_sections(project.id).await?;
@@ -44,9 +42,7 @@ async fn main() -> BoxedResult<()> {
     let section = match section {
         SectionChoice::None => None,
         SectionChoice::Some(section) => Some(section),
-        SectionChoice::CreateNew => {
-            todo!()
-        }
+        SectionChoice::CreateNew(name) => Some(api.create_section(project.id, name).await?),
     };
 
     println!("{}", year);

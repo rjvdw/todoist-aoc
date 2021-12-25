@@ -1,7 +1,10 @@
 //! Methods for accessing the Todoist API.
 
-use crate::todoist::project::GetProjectsResponse;
-use crate::todoist::section::GetSectionsResponse;
+use reqwest::RequestBuilder;
+use serde::Serialize;
+
+use crate::todoist::project::{GetProjectsResponse, Project};
+use crate::todoist::section::{GetSectionsResponse, Section};
 use crate::util::BoxedResult;
 
 pub mod project;
@@ -22,28 +25,73 @@ impl RestApi {
         }
     }
 
-    pub async fn fetch_projects(&self) -> BoxedResult<GetProjectsResponse> {
-        Ok(self
-            .client
-            .get(&format!("{}/projects", BASE_API_URL))
+    fn get(&self, endpoint: &str) -> RequestBuilder {
+        self.client
+            .get(&format!("{}/{}", BASE_API_URL, endpoint))
             .bearer_auth(&self.token)
-            .send()
-            .await?
-            .json::<GetProjectsResponse>()
-            .await?)
+    }
+
+    fn post(&self, endpoint: &str) -> RequestBuilder {
+        self.client
+            .post(&format!("{}/{}", BASE_API_URL, endpoint))
+            .bearer_auth(&self.token)
+    }
+
+    pub async fn fetch_projects(&self) -> BoxedResult<GetProjectsResponse> {
+        let response = self.get("projects").send().await?;
+
+        if !response.status().is_success() {
+            eprintln!("{:?}", response);
+        }
+
+        Ok(response.json::<GetProjectsResponse>().await?)
+    }
+
+    pub async fn create_project(&self, name: String) -> BoxedResult<Project> {
+        #[derive(Serialize)]
+        struct Request {
+            name: String,
+        }
+
+        let request = Request { name };
+
+        let response = self.post("projects").json(&request).send().await?;
+
+        if !response.status().is_success() {
+            eprintln!("{:?}", response);
+        }
+
+        Ok(response.json::<Project>().await?)
     }
 
     pub async fn fetch_sections(&self, project_id: u64) -> BoxedResult<GetSectionsResponse> {
-        Ok(self
-            .client
-            .get(&format!(
-                "{}/sections?project_id={}",
-                BASE_API_URL, project_id
-            ))
-            .bearer_auth(&self.token)
+        let response = self
+            .get(&format!("sections?project_id={}", project_id))
             .send()
-            .await?
-            .json::<GetSectionsResponse>()
-            .await?)
+            .await?;
+
+        if !response.status().is_success() {
+            eprintln!("{:?}", response);
+        }
+
+        Ok(response.json::<GetSectionsResponse>().await?)
+    }
+
+    pub async fn create_section(&self, project_id: u64, name: String) -> BoxedResult<Section> {
+        #[derive(Serialize)]
+        struct Request {
+            name: String,
+            project_id: u64,
+        }
+
+        let request = Request { name, project_id };
+
+        let response = self.post("sections").json(&request).send().await?;
+
+        if !response.status().is_success() {
+            eprintln!("{:?}", response);
+        }
+
+        Ok(response.json::<Section>().await?)
     }
 }

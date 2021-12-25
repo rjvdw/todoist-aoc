@@ -3,13 +3,14 @@ use std::{io, process};
 
 use termion::input::TermRead;
 
+use crate::prompt::name::prompt_name;
 use crate::todoist::section::{GetSectionsResponse, Section};
 
 #[derive(Debug)]
 pub enum SectionChoice {
     None,
     Some(Section),
-    CreateNew,
+    CreateNew(String),
 }
 
 pub fn choose_section(stdin: &mut io::StdinLock, sections: GetSectionsResponse) -> SectionChoice {
@@ -43,7 +44,7 @@ pub fn choose_section(stdin: &mut io::StdinLock, sections: GetSectionsResponse) 
                         println!(
                             "Okay, creating a new section and creating the tasks in that section."
                         );
-                        return SectionChoice::CreateNew;
+                        return SectionChoice::CreateNew(prompt_name(stdin));
                     }
                     2 => {
                         println!("Okay, not creating the tasks inside a section.");
